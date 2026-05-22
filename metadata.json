@@ -1,0 +1,6 @@
+{
+  "name": "VidaSana",
+  "description": "Gestor de tareas diarias y salud integral: sueño, ritmos cardíacos, pasos, hidratación, rutinas, gráficos de progreso mensual y sincronización.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
