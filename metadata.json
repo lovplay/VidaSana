@@ -1,6 +1,6 @@
 {
-  "name": "VidaSana",
-  "description": "Gestor de tareas diarias y salud integral: sueño, ritmos cardíacos, pasos, hidratación, rutinas, gráficos de progreso mensual y sincronización.",
+  "name": "Pulsefy",
+  "description": "Gestor inteligente de salud integral, hábitos y bento-grid dashboard: pasos, sueño, frecuencia cardíaca, agua, rutinas, autenticación y gestión de permisos de sensores.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

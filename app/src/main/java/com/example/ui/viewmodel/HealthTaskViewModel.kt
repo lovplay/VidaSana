@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -249,6 +250,118 @@ class HealthTaskViewModel(
             _syncing.value = false
             val nowTimeStr = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
             _lastSyncedStr.value = "Hoy a las $nowTimeStr"
+        }
+    }
+
+    // --- USER SESSION & PERMISSIONS MANAGEMENT (SharedPreferences backed) ---
+    private val prefs = getApplication<Application>().getSharedPreferences("pulsefy_prefs", Context.MODE_PRIVATE)
+
+    private val _isLoggedIn = MutableStateFlow(prefs.getBoolean("is_logged_in", false))
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+
+    private val _currentUserEmail = MutableStateFlow(prefs.getString("user_email", "") ?: "")
+    val currentUserEmail: StateFlow<String> = _currentUserEmail.asStateFlow()
+
+    private val _currentUserName = MutableStateFlow(prefs.getString("user_name", "") ?: "")
+    val currentUserName: StateFlow<String> = _currentUserName.asStateFlow()
+
+    private val _isGoogleUser = MutableStateFlow(prefs.getBoolean("is_google_user", false))
+    val isGoogleUser: StateFlow<Boolean> = _isGoogleUser.asStateFlow()
+
+    // Permissions state flows backed by persistence
+    private val _notifPermission = MutableStateFlow(prefs.getBoolean("perm_notification", false))
+    val notifPermission: StateFlow<Boolean> = _notifPermission.asStateFlow()
+
+    private val _gpsPermission = MutableStateFlow(prefs.getBoolean("perm_gps", false))
+    val gpsPermission: StateFlow<Boolean> = _gpsPermission.asStateFlow()
+
+    private val _motionPermission = MutableStateFlow(prefs.getBoolean("perm_motion", false))
+    val motionPermission: StateFlow<Boolean> = _motionPermission.asStateFlow()
+
+    private val _bootPermission = MutableStateFlow(prefs.getBoolean("perm_boot", false))
+    val bootPermission: StateFlow<Boolean> = _bootPermission.asStateFlow()
+
+    fun loginUser(email: String, passwordHash: String): Boolean {
+        val savedPass = prefs.getString("user_pass_$email", null)
+        if (savedPass != null && savedPass == passwordHash) {
+            val name = prefs.getString("user_name_val_$email", "Usuario") ?: "Usuario"
+            prefs.edit()
+                .putBoolean("is_logged_in", true)
+                .putString("user_email", email)
+                .putString("user_name", name)
+                .putBoolean("is_google_user", false)
+                .apply()
+            _isLoggedIn.value = true
+            _currentUserEmail.value = email
+            _currentUserName.value = name
+            _isGoogleUser.value = false
+            return true
+        }
+        return false
+    }
+
+    fun registerUser(name: String, email: String, passwordHash: String): Boolean {
+        if (prefs.contains("user_pass_$email")) return false // already exists
+        prefs.edit()
+            .putString("user_pass_$email", passwordHash)
+            .putString("user_name_val_$email", name)
+            .putBoolean("is_logged_in", true)
+            .putString("user_email", email)
+            .putString("user_name", name)
+            .putBoolean("is_google_user", false)
+            .apply()
+        _isLoggedIn.value = true
+        _currentUserEmail.value = email
+        _currentUserName.value = name
+        _isGoogleUser.value = false
+        return true
+    }
+
+    fun loginWithGoogle(name: String, email: String) {
+        prefs.edit()
+            .putBoolean("is_logged_in", true)
+            .putString("user_email", email)
+            .putString("user_name", name)
+            .putBoolean("is_google_user", true)
+            .apply()
+        _isLoggedIn.value = true
+        _currentUserEmail.value = email
+        _currentUserName.value = name
+        _isGoogleUser.value = true
+    }
+
+    fun logout() {
+        prefs.edit()
+            .putBoolean("is_logged_in", false)
+            .putString("user_email", "")
+            .putString("user_name", "")
+            .putBoolean("is_google_user", false)
+            .apply()
+        _isLoggedIn.value = false
+        _currentUserEmail.value = ""
+        _currentUserName.value = ""
+        _isGoogleUser.value = false
+    }
+
+    fun setPermissionState(permission: String, granted: Boolean) {
+        val editor = prefs.edit()
+        when (permission) {
+            "notification" -> {
+                editor.putBoolean("perm_notification", granted).apply()
+                _notifPermission.value = granted
+            }
+            "gps" -> {
+                editor.putBoolean("perm_gps", granted).apply()
+                _gpsPermission.value = granted
+            }
+            "motion" -> {
+                editor.putBoolean("perm_motion", granted).apply()
+                _motionPermission.value = granted
+            }
+            "boot" -> {
+                editor.putBoolean("perm_boot", granted).apply()
+                _bootPermission.value = granted
+            }
         }
     }
 }

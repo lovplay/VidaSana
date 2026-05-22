@@ -1,37 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Outer wellness tracking ring -->
+    <!-- Ambient Glow behind the logo -->
     <path
-        android:fillColor="#00000000"
-        android:pathData="M54,24 A30,30 0,1,1 53.9,24"
-        android:strokeWidth="5"
-        android:strokeColor="#1F34D399"
-        android:strokeLineCap="round"/>
+        android:fillColor="#151A56"
+        android:pathData="M54,54m-33,0a33,33 0,1,1 66,0a33,33 0,1,1 -66,0"
+        android:strokeWidth="0.1" />
 
-    <!-- Inner active progress arc (steps/hydration representation) -->
+    <!-- Stylized Person Circular Head -->
+    <path
+        android:fillColor="#E1D9F5"
+        android:pathData="M54,34m-6,0a6,6 0,1,1 12,0a6,6 0,1,1 -12,0"/>
+
+    <!-- Gradient Ribbon forming the stylized 'P' (running body and loop) -->
+    <path
+        android:pathData="M31,77 C31,65 41,50 54,49 C65,49 76,51 77,39 C78,27 64,22 51,24 C38,26 29,35 30,49 C30,55 33,52 32,56 C31,60 30,60 31,77 Z"
+        android:strokeWidth="1">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="30"
+                android:startY="24"
+                android:endX="77"
+                android:endY="77"
+                android:type="linear">
+                <item
+                    android:color="#FFD8E4"
+                    android:offset="0.0" />
+                <item
+                    android:color="#D0BCFF"
+                    android:offset="0.5" />
+                <item
+                    android:color="#A0B5FF"
+                    android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Additional arm swing ribbon highlight of the running figure -->
+    <path
+        android:pathData="M38,54 C46,46 54,42 66,41 C67,41 68,43 66,45 C54,48 44,53 35,62"
+        android:strokeWidth="4"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="38"
+                android:startY="41"
+                android:endX="66"
+                android:endY="62"
+                android:type="linear">
+                <item
+                    android:color="#E8DEF8"
+                    android:offset="0.0" />
+                <item
+                    android:color="#D0BCFF"
+                    android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Vibrant neon cyan/teal heartbeat wave 'N' at the center-bottom representing the pulse -->
     <path
         android:fillColor="#00000000"
-        android:pathData="M54,24 A30,30 0,1,1 30,68"
-        android:strokeWidth="5"
+        android:pathData="M42,66 L49,58 L54,66 L61,54"
+        android:strokeWidth="6"
+        android:strokeColor="#2DD4BF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+    <!-- Second highlight wave to add depth -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M44,66 L49,58 L54,66 L61,54"
+        android:strokeWidth="2"
         android:strokeColor="#34D399"
-        android:strokeLineCap="round"/>
-
-    <!-- Glowing Heart Emblem indicating heartbeat / health -->
-    <path
-        android:fillColor="#2DD4BF"
-        android:pathData="M54,42 C51,37 42,37 42,45 C42,53 54,63 54,63 C54,63 66,53 66,45 C66,37 57,37 54,42 Z"/>
-
-    <!-- Tick mark overlay in checkmark representing tasks efficiency -->
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M50,54 L53,57 L60,49"
-        android:strokeWidth="3.2"
-        android:strokeColor="#0F172A"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"/>
 </vector>

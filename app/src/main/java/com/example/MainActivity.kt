@@ -49,15 +49,23 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainAppContainer(viewModel: HealthTaskViewModel) {
-    var selectedTab by remember { mutableIntStateOf(0) }
+    val isLoggedIn by viewModel.isLoggedIn.collectAsState()
 
-    val titles = listOf(
-        "Panel VidaSana",
-        "Tareas Diarias",
-        "Registro Diario",
-        "Análisis de Progreso",
-        "Ajustes"
-    )
+    if (!isLoggedIn) {
+        AuthScreen(
+            viewModel = viewModel,
+            onAuthSuccess = {}
+        )
+    } else {
+        var selectedTab by remember { mutableIntStateOf(0) }
+
+        val titles = listOf(
+            "Panel Pulsefy",
+            "Tareas Diarias",
+            "Registro Diario",
+            "Análisis de Progreso",
+            "Ajustes"
+        )
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -182,4 +190,5 @@ fun MainAppContainer(viewModel: HealthTaskViewModel) {
             }
         }
     }
+}
 }
