@@ -43,6 +43,7 @@ fun DashboardScreen(
     val hydrationObj by viewModel.hydrationToday.collectAsState()
     val heartRateLogs by viewModel.heartRateLogs.collectAsState()
     val isSyncing by viewModel.syncing.collectAsState()
+    val currentUserName by viewModel.currentUserName.collectAsState()
 
     val pendingTasks = tasks.filter { !it.isCompleted }
     val completedRoutines = routines.filter { it.isCompleted }.size
@@ -78,7 +79,7 @@ fun DashboardScreen(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Hola, VidaSana",
+                    text = "Hola, ${currentUserName.trim().ifBlank { "VidaSana" }}",
                     color = BentoSleepDark,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Black,

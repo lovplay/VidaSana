@@ -164,7 +164,15 @@ class HealthTaskViewModel(
 
     fun toggleTask(task: TaskEntity) {
         viewModelScope.launch {
-            repository.updateTaskCompletion(task.id, !task.isCompleted)
+            val newCompletion = !task.isCompleted
+            repository.updateTaskCompletion(task.id, newCompletion)
+            val title = if (newCompletion) "¡Tarea Completada!" else "Tarea Reactivada"
+            val message = if (newCompletion) {
+                "Excelente trabajo completando: '${task.title}' 🎯"
+            } else {
+                "Se reactivó la tarea '${task.title}'. ¡A por ella! 💪"
+            }
+            com.example.util.AlarmAndNotificationHelper.sendNotification(getApplication(), title, message, task.id)
         }
     }
 
@@ -222,7 +230,15 @@ class HealthTaskViewModel(
     // --- ROUTINE ACTIONS ---
     fun toggleRoutine(routine: RoutineEntity) {
         viewModelScope.launch {
-            repository.updateRoutineCompletion(routine.id, !routine.isCompleted)
+            val newCompletion = !routine.isCompleted
+            repository.updateRoutineCompletion(routine.id, newCompletion)
+            val title = if (newCompletion) "¡Rutina Completada!" else "Rutina Pendiente"
+            val message = if (newCompletion) {
+                "Completaste '${routine.title}' (${routine.category}) 🌟"
+            } else {
+                "La rutina '${routine.title}' está pendiente. ¡Tú puedes!"
+            }
+            com.example.util.AlarmAndNotificationHelper.sendNotification(getApplication(), title, message, routine.id + 10000)
         }
     }
 
@@ -362,6 +378,55 @@ class HealthTaskViewModel(
                 editor.putBoolean("perm_boot", granted).apply()
                 _bootPermission.value = granted
             }
+        }
+    }
+
+    // --- ALARMS GENERATION & SCHEDULING ---
+    private val _scheduledAlarms = MutableStateFlow<List<String>>(
+        prefs.getStringSet("scheduled_alarms_list", emptySet())?.toList() ?: emptyList()
+    )
+    val scheduledAlarms: StateFlow<List<String>> = _scheduledAlarms.asStateFlow()
+
+    fun scheduleNewAlarm(title: String, hour: Int, minute: Int, type: String): Boolean {
+        val alarmId = (1000..9999).random()
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+        
+        val timeStr = String.format("%02d:%02d", hour, minute)
+        val alarmString = "$alarmId|$title|$timeStr|$type"
+        
+        val currentSet = prefs.getStringSet("scheduled_alarms_list", emptySet())?.toMutableSet() ?: mutableSetOf()
+        currentSet.add(alarmString)
+        prefs.edit().putStringSet("scheduled_alarms_list", currentSet).apply()
+        _scheduledAlarms.value = currentSet.toList()
+        
+        com.example.util.AlarmAndNotificationHelper.scheduleAlarm(
+            getApplication(),
+            alarmId,
+            calendar.timeInMillis,
+            "Alarma de $type: $title",
+            "¡Es el momento perfecto para realizar tu actividad! ⏰"
+        )
+        return true
+    }
+
+    fun deleteScheduledAlarm(alarmStr: String) {
+        val parts = alarmStr.split("|")
+        if (parts.size >= 3) {
+            val alarmId = parts[0].toIntOrNull() ?: return
+            val currentSet = prefs.getStringSet("scheduled_alarms_list", emptySet())?.toMutableSet() ?: mutableSetOf()
+            currentSet.remove(alarmStr)
+            prefs.edit().putStringSet("scheduled_alarms_list", currentSet).apply()
+            _scheduledAlarms.value = currentSet.toList()
+            
+            com.example.util.AlarmAndNotificationHelper.cancelAlarm(getApplication(), alarmId)
         }
     }
 }

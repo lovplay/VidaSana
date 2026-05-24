@@ -248,6 +248,16 @@ fun TasksScreen(
                     Button(
                         onClick = {
                             if (taskTitle.isNotBlank()) {
+                                // Auto-schedule alarm if interval selected
+                                if (taskReminder != "Sin recordatorio") {
+                                    val (h, m) = when (taskReminder) {
+                                        "Cada mañana (08:00)" -> Pair(8, 0)
+                                        "Media tarde (16:00)" -> Pair(16, 0)
+                                        else -> Pair(21, 0)
+                                    }
+                                    viewModel.scheduleNewAlarm(taskTitle, h, m, "Tarea")
+                                }
+
                                 viewModel.addTask(
                                     title = taskTitle,
                                     description = if (taskReminder != "Sin recordatorio") "$taskDesc (Recordatorio a las ${taskReminder.substringAfter("(").substringBefore(")")})" else taskDesc,

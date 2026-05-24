@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -52,6 +53,12 @@ fun SettingsScreen(
 
     var waterAlertsEnabled by remember { mutableStateOf(true) }
     var stepsGoalAlertsEnabled by remember { mutableStateOf(true) }
+
+    val scheduledAlarms by viewModel.scheduledAlarms.collectAsState()
+    var alarmTitle by remember { mutableStateOf("") }
+    var alarmHour by remember { mutableStateOf("08") }
+    var alarmMinute by remember { mutableStateOf("00") }
+    var alarmType by remember { mutableStateOf("Rutina") }
 
     LazyColumn(
         modifier = modifier
@@ -437,6 +444,247 @@ fun SettingsScreen(
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
+                }
+            }
+        }
+
+        // --- PROMINENT ALARM GENERATOR & MONITORING PANEL ---
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Generador de Alarmas Pulsefy",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x1F2DD4BF))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                "Activo",
+                                color = TealAccent,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Configura alertas automáticas de sistema para acordarte de tus rutinas o tareas vitales.",
+                        fontSize = 11.sp,
+                        color = TextLowContrast
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 1. Selector de tipo de alarma
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .padding(4.dp)
+                    ) {
+                        listOf("Rutina", "Tarea").forEach { type ->
+                            val isSel = alarmType == type
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (isSel) TealAccent else Color.Transparent)
+                                    .clickable { alarmType = type }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = type,
+                                    color = if (isSel) Color(0xFF0F172A) else MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 2. Input de título de alarma
+                    OutlinedTextField(
+                        value = alarmTitle,
+                        onValueChange = { alarmTitle = it },
+                        label = { Text("¿Para qué actividad?") },
+                        placeholder = { Text("Ej: Tomar medicina, Estiramiento") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = TealAccent,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.15f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 3. Inputs de tiempo (Hora y Minuto)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = alarmHour,
+                            onValueChange = { if (it.length <= 2) alarmHour = it },
+                            label = { Text("Hora (00-23)") },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                focusedBorderColor = TealAccent,
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.15f)
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        OutlinedTextField(
+                            value = alarmMinute,
+                            onValueChange = { if (it.length <= 2) alarmMinute = it },
+                            label = { Text("Minuto (00-59)") },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                focusedBorderColor = TealAccent,
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.15f)
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Action Button: Programar Alarma
+                    Button(
+                        onClick = {
+                            if (alarmTitle.isBlank()) {
+                                Toast.makeText(context, "Por favor indica un título", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+                            val hr = alarmHour.toIntOrNull() ?: 8
+                            val min = alarmMinute.toIntOrNull() ?: 0
+                            if (hr !in 0..23 || min !in 0..59) {
+                                Toast.makeText(context, "Hora o minuto inválidos", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+
+                            val success = viewModel.scheduleNewAlarm(alarmTitle, hr, min, alarmType)
+                            if (success) {
+                                Toast.makeText(context, "¡Alarma programada exitosamente para las ${String.format("%02d:%02d", hr, min)}!", Toast.LENGTH_LONG).show()
+                                alarmTitle = ""
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MintGreen),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Icon(Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0F172A))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Programar Alarma Inteligente", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold)
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // 4. LIST OF SCHEDULED ALARMS
+                    Text(
+                        text = "Alarmas Programadas Activas:",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (scheduledAlarms.isEmpty()) {
+                        Text(
+                            text = "No tienes alarmas programadas.",
+                            color = TextLowContrast,
+                            fontSize = 12.sp
+                        )
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            scheduledAlarms.forEach { alarmStr ->
+                                val parts = alarmStr.split("|")
+                                if (parts.size >= 4) {
+                                    val alarmId = parts[0]
+                                    val title = parts[1]
+                                    val time = parts[2]
+                                    val type = parts[3]
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(Color.White.copy(alpha = 0.04f))
+                                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+                                            .padding(12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(Color.White.copy(alpha = 0.05f))
+                                                    .size(36.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = if (type == "Rutina") Icons.Default.Star else Icons.Default.List,
+                                                    contentDescription = null,
+                                                    tint = MintGreen,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Column {
+                                                Text(
+                                                    text = title,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White
+                                                )
+                                                Text(
+                                                    text = "$type • $time hs",
+                                                    fontSize = 11.sp,
+                                                    color = TextLowContrast
+                                                )
+                                            }
+                                        }
+
+                                        IconButton(
+                                            onClick = {
+                                                viewModel.deleteScheduledAlarm(alarmStr)
+                                                Toast.makeText(context, "Alarma cancelada", Toast.LENGTH_SHORT).show()
+                                            },
+                                            colors = IconButtonDefaults.iconButtonColors(contentColor = CoralAlert)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Borrar"
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
